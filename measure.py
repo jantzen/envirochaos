@@ -1,3 +1,4 @@
+from __future__ import print_function
 import piplates.DAQCplate as DAQC
 import RPi.GPIO as GPIO
 from Adafruit_BME280 import *
@@ -6,6 +7,7 @@ import pickle
 import socket
 import os
 import numpy as np
+
 
 # create a variable (that will be used globally) to hold data
 data = []
@@ -40,7 +42,7 @@ def save(channel):
     # set filename
     archive_time = time.ctime()
     archive_time = archive_time.replace(' ', '_')
-    filename = ('../../data/output/lightbulb_data_' + archive_time + '.txt')
+    filename = ('./data/lightbulb_data_' + archive_time + '.txt')
    
     global data
     np.savetxt(filename, np.array(data))
@@ -58,7 +60,7 @@ DAQC.getINTflags(0) # clear any flags
 # GPIO event detection must be set up AFTER clearing DAQC interrupt flag
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.add_event_detect(22, GPIO.FALLING, callback=sample)
+GPIO.add_event_detect(22, GPIO.FALLING, callback=save)
 DAQC.getINTflags(0)
 
 # set up BME280
@@ -67,14 +69,14 @@ sensor = BME280(mode=BME280_OSAMPLE_8)
 
 try:
     DAQC.setLED(0,0)
+    print("Sampling...")
     while(1):
         # measure from the (analog) photo-sensor
         light = DAQC.getADC(0,0)
         data.append(light)
-        print("{} \r".format(light), end='')
 
         # wait 
-        time.sleep(0.1)
+        time.sleep(0.05)
 
 except KeyboardInterrupt:
     DAQC.clrLED(0,0)
@@ -83,5 +85,5 @@ except KeyboardInterrupt:
     # set filename
     archive_time = time.ctime()
     archive_time = archive_time.replace(' ', '_')
-    filename = ('../../data/output/lightbulb_data_' + archive_time + '.txt')
+    filename = ('./data/lightbulb_data_' + archive_time + '.txt')
     np.savetxt(filename, np.array(data))
